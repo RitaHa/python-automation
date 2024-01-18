@@ -15,7 +15,7 @@ def clear_gmail_folder(email, password, folder, max_count=0):
     attempts_count = 10
     deleted_qty = 0
 
-    while attempts_count > 0 and deleted_qty < max_count:
+    while attempts_count > 0 and (deleted_qty < max_count or not max_count):
         try:
             client = IMAPClient('imap.googlemail.com', use_uid=True, ssl=True)
             client.login(email, password)
@@ -27,10 +27,8 @@ def clear_gmail_folder(email, password, folder, max_count=0):
         number_messages = len(messages)
         logger.info(f'Number of messages before deleting for {email} is: {number_messages}')
         try:
-            if max_count and max_count < number_messages:
-                client.delete_messages(messages[0:max_count])
-            else:
-                client.delete_messages(messages)
+            to_remove = messages[0:max_count] if max_count and max_count < number_messages else messages
+            client.delete_messages(to_remove)
             status, response = client.expunge()
             deleted_qty = 0 if len(response) == 0 else len(response) - 1
             logger.info(f'Number of deleted messages for {email} is: {deleted_qty}')
